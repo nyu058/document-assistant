@@ -4,6 +4,7 @@ from thefuzz import fuzz
 import streamlit as st
 import time
 import subprocess
+import string
 
 SUPPORTED_FILES = {".docx"}
 
@@ -36,11 +37,12 @@ class Indexer:
                     doc = Document(full_path)
                     for p in doc.paragraphs:
                         words = p.text.split()
-                        num_commas = p.text.count(",")
-                        if not num_commas:
-                            num_commas = 1
-                        # only read paragraphs with more than five words and have a word/comma ratio of 2
-                        if len(words) > 5 and len(words)/num_commas > 3:
+                        num_pun = count_chars(p.text, string.punctuation)
+                        if not num_pun:
+                            num_pun = 1
+                        # only read paragraphs with more than five words and have a word/punctuation ratio of 3
+                        # todo enable customization of these values
+                        if len(words) > 5 and len(words)/num_pun > 3:
                             self.paragraphs.append(
                                 Paragraph(p.text, full_path))
                 # todo: add pdf support
@@ -65,6 +67,15 @@ class Indexer:
         for i in sorted_indexes[:num_results]:
             results.append(self.paragraphs[i])
         return results
+
+def count_chars(string: str, chars: set):
+    """helper function to count the number times the string contains
+      a character in the set """
+    count = 0
+    for c in string:
+        if c in chars:
+            count +=1
+    return count
 
 
 @st.cache_resource(show_spinner=False)
