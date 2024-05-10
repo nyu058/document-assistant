@@ -96,7 +96,7 @@ if __name__ == "__main__":
     st.title("Document Search")
     search_input = st.text_input("Enter keywords...")
     if search_input:
-        results = indexer.search(search_input, num_results=10)
+        results = indexer.search(search_input, num_results=20)
         for i, paragraph in enumerate(results):
             text = f"""
             **File**: {paragraph.file_path}
