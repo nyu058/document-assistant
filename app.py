@@ -87,16 +87,17 @@ def init_indexer(dir_path):
 
 if __name__ == "__main__":
     directory = os.environ.get("TOP_DIR")
+    st.title("Document Search")
+    search_input = st.sidebar.text_input("Enter keywords...")
+    num_results = st.sidebar.selectbox("Number of results", [10, 20, 50, 100])
     if not directory:
         raise RuntimeError("Environment variable `TOP_DIR` must be set!")
     with st.spinner(f'Indexing directory {directory}...'):
         start = time.time()
         indexer = init_indexer(directory)
     st.success(f'Completed Indexing in {int(time.time() - start)} seconds')
-    st.title("Document Search")
-    search_input = st.text_input("Enter keywords...")
     if search_input:
-        results = indexer.search(search_input, num_results=20)
+        results = indexer.search(search_input, num_results=num_results)
         for i, paragraph in enumerate(results):
             text = f"""
             **File**: {paragraph.file_path}
