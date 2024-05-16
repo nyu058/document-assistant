@@ -3,7 +3,6 @@ import os
 from thefuzz import fuzz
 import streamlit as st
 import time
-import subprocess
 import string
 from datetime import datetime
 
@@ -33,7 +32,7 @@ class Indexer:
     def index(self):
         print(f"Start indexing directory {self.top_dir}...")
         start = time.time()
-        for (root, _, files) in os.walk(self.top_dir, topdown=True):
+        for root, _, files in os.walk(self.top_dir, topdown=True):
             for file in files:
                 if os.path.splitext(file)[1] == ".docx" and not file.startswith("~$"):
                     full_path = os.path.join(root, file)
@@ -46,9 +45,10 @@ class Indexer:
                             num_pun = 1
                         # only read paragraphs with more than five words and have a word/punctuation ratio of 3
                         # todo enable customization of these values
-                        if len(words) > 5 and len(words)/num_pun > 3:
+                        if len(words) > 5 and len(words) / num_pun > 3:
                             self.paragraphs.append(
-                                Paragraph(p.text, full_path, last_modified))
+                                Paragraph(p.text, full_path, last_modified)
+                            )
                 # todo: add pdf support
                 # if os.path.splitext(file)[1] == ".pdf":
                 #     full_path = os.path.join(root,file)
@@ -66,19 +66,21 @@ class Indexer:
             ratios.append(score)
             p.score = score
         sorted_indexes = sorted(
-            range(len(ratios)), key=lambda k: ratios[k], reverse=True)
+            range(len(ratios)), key=lambda k: ratios[k], reverse=True
+        )
 
         for i in sorted_indexes[:num_results]:
             results.append(self.paragraphs[i])
         return results
 
+
 def count_chars(string: str, chars: set):
     """helper function to count the number times the string contains
-      a character in the set """
+    a character in the set"""
     count = 0
     for c in string:
         if c in chars:
-            count +=1
+            count += 1
     return count
 
 
@@ -90,20 +92,27 @@ def init_indexer(dir_path):
 
 
 if __name__ == "__main__":
+    st.set_page_config(
+        page_title="Document Search",
+    )
     directory = os.environ.get("TOP_DIR")
     st.title("Document Search")
     search_input = st.sidebar.text_input("Enter keywords...")
     num_results = st.sidebar.selectbox("Number of results", [10, 20, 50, 100])
     if not directory:
         raise RuntimeError("Environment variable `TOP_DIR` must be set!")
-    with st.spinner(f'Indexing directory {directory}...'):
+    with st.spinner(f"Indexing directory {directory}..."):
         start = time.time()
         indexer = init_indexer(directory)
-    st.success(f'Completed Indexing in {int(time.time() - start)} seconds')
+    st.success(f"Completed Indexing in {int(time.time() - start)} seconds")
     if search_input:
         results = indexer.search(search_input, num_results=num_results)
         for i, paragraph in enumerate(results):
-            date = datetime.fromtimestamp(paragraph.last_modified).date().strftime("%Y-%m-%d")
+            date = (
+                datetime.fromtimestamp(paragraph.last_modified)
+                .date()
+                .strftime("%Y-%m-%d")
+            )
             text = f"""
             **File**: {paragraph.file_path}
 
