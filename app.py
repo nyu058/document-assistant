@@ -5,6 +5,7 @@ import streamlit as st
 import time
 import subprocess
 import string
+from datetime import datetime
 
 SUPPORTED_FILES = {".docx"}
 
@@ -12,12 +13,14 @@ SUPPORTED_FILES = {".docx"}
 class Paragraph:
     score = 0
 
-    def __init__(self, text, file_path) -> None:
+    def __init__(self, text, file_path, last_modified) -> None:
         self.text = text
         self.file_path = file_path
+        self.last_modified = last_modified
 
     def __repr__(self) -> str:
-        return f"""\nFile path: {self.file_path}\nText: {self.text}\n"""
+        date = datetime.fromtimestamp(self.last_modified).date().strftime("%Y-%m-%d")
+        return f"""\nFile path: {self.file_path}\nText: {self.text}\nLast Modified: {date}\n"""
 
 
 class Indexer:
@@ -35,6 +38,7 @@ class Indexer:
                 if os.path.splitext(file)[1] == ".docx" and not file.startswith("~$"):
                     full_path = os.path.join(root, file)
                     doc = Document(full_path)
+                    last_modified = os.path.getmtime(full_path)
                     for p in doc.paragraphs:
                         words = p.text.split()
                         num_pun = count_chars(p.text, string.punctuation)
@@ -44,7 +48,7 @@ class Indexer:
                         # todo enable customization of these values
                         if len(words) > 5 and len(words)/num_pun > 3:
                             self.paragraphs.append(
-                                Paragraph(p.text, full_path))
+                                Paragraph(p.text, full_path, last_modified))
                 # todo: add pdf support
                 # if os.path.splitext(file)[1] == ".pdf":
                 #     full_path = os.path.join(root,file)
@@ -99,16 +103,15 @@ if __name__ == "__main__":
     if search_input:
         results = indexer.search(search_input, num_results=num_results)
         for i, paragraph in enumerate(results):
+            date = datetime.fromtimestamp(paragraph.last_modified).date().strftime("%Y-%m-%d")
             text = f"""
             **File**: {paragraph.file_path}
 
             **Line**: {paragraph.text}
 
+            **Last Modified**: {date}
+
             **Match Score**: {paragraph.score}
             """
             st.markdown(text)
-
-            if st.button("Open File", type="primary", key=i):
-                subprocess.check_output(
-                    f"open '{paragraph.file_path}'", shell=True)
             st.divider()
